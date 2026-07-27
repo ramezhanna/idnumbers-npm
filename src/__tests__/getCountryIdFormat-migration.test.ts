@@ -2,13 +2,13 @@
  * Parity tests for getCountryIdFormat registry migration (Issue #53).
  *
  * Verifies that the registry-based getCountryIdFormat returns complete
- * IdFormat info for all 80 registered countries, preserves format strings,
+ * IdFormat info for all 81 registered countries, preserves format strings,
  * resolves aliases, and returns null for unregistered codes.
  */
-import { getCountryIdFormat } from '../index';
+import { getCountryIdFormat, SUPPORTED_COUNTRIES } from '../index';
 
 // ---------------------------------------------------------------------------
-// All 80 registered countries should return non-null IdFormat
+// All 81 registered countries should return non-null IdFormat
 // ---------------------------------------------------------------------------
 describe('getCountryIdFormat returns IdFormat for all registered countries', () => {
   const registeredCountries = [
@@ -57,6 +57,7 @@ describe('getCountryIdFormat returns IdFormat for all registered countries', () 
     { code: 'JPN', name: 'Japan', idType: 'My Number' },
     { code: 'KAZ', name: 'Kazakhstan', idType: 'Individual Identification Number' },
     { code: 'KWT', name: 'Kuwait', idType: 'Civil Number' },
+    { code: 'EGY', name: 'Egypt', idType: 'National ID' },
     { code: 'IDN', name: 'Indonesia', idType: 'National ID Number' },
     { code: 'KOR', name: 'South Korea', idType: 'Resident Registration Number' },
     { code: 'MEX', name: 'Mexico', idType: 'CURP' },
@@ -67,7 +68,7 @@ describe('getCountryIdFormat returns IdFormat for all registered countries', () 
     { code: 'PAK', name: 'Pakistan', idType: 'National Identity Card' },
     { code: 'THA', name: 'Thailand', idType: 'National Identity Card Number' },
     { code: 'VNM', name: 'Vietnam', idType: 'Citizen Identity Card Number' },
-    { code: 'NZL', name: 'New Zealand', idType: 'IRD Number' },
+    { code: 'NZL', name: 'New Zealand', idType: 'Driver Licence Number' },
     { code: 'PHL', name: 'Philippines', idType: 'PhilSys Number' },
     { code: 'PRT', name: 'Portugal', idType: 'Tax Identification Number (NIF)' },
     { code: 'ROU', name: 'Romania', idType: 'Personal Numeric Code' },
@@ -117,15 +118,24 @@ describe('getCountryIdFormat returns IdFormat for all registered countries', () 
 // ---------------------------------------------------------------------------
 describe('Format display strings', () => {
   const countriesWithFormat: Array<{ code: string; format: string }> = [
+    { code: 'ARG', format: '##.###.###' },
+    { code: 'AUS', format: '#### ##### #(/#)' },
+    { code: 'BRA', format: '###.###.###-##' },
+    { code: 'CAN', format: '###-###-###' },
+    { code: 'CHL', format: '##.###.###-C' },
+    { code: 'COL', format: '##(#).###.###-C' },
     { code: 'IND', format: 'XXXX XXXX XXXX' },
     { code: 'JPN', format: 'XXXXXXXXXXXX' },
     { code: 'KAZ', format: 'YYMMDDGSSSSC' },
     { code: 'KWT', format: 'CYYMMDDSSSSK' },
+    { code: 'EGY', format: 'CYYMMDDGGSSSSV' },
     { code: 'IDN', format: 'PPPPPPDDMMYYSSSS' },
     { code: 'KOR', format: 'YYMMDD-GSSSSSS' },
     { code: 'MEX', format: 'AAAANNNNNNAAAAAANN' },
     { code: 'LKA', format: 'YYYYDDDSSSSC' },
     { code: 'NGA', format: 'XXXXXXXXXXX' },
+    { code: 'NZL', format: 'XXXXXXX(X)' },
+    { code: 'PNG', format: '##########' },
     { code: 'MYS', format: 'YYMMDD-PB-###G' },
     { code: 'NOR', format: 'DDMMYYIIIKK' },
     { code: 'PAK', format: '#####-#######-#' },
@@ -134,7 +144,10 @@ describe('Format display strings', () => {
     { code: 'SVN', format: 'DDMMYYYRRSSSC' },
     { code: 'SRB', format: 'DDMMYYYRRSSSC' },
     { code: 'TWN', format: 'X#########' },
+    { code: 'USA', format: '###-##-####' },
     { code: 'VEN', format: 'V-######## or E-########' },
+    { code: 'ZAF', format: 'YYMMDDSSSSCAZ' },
+    { code: 'ZWE', format: 'RR######(N)CDD' },
   ];
 
   test.each(countriesWithFormat)('$code has format string "$format"', ({ code, format }) => {
@@ -143,10 +156,12 @@ describe('Format display strings', () => {
     expect(result!.format).toBe(format);
   });
 
-  it('should not have format string for countries without one', () => {
-    const result = getCountryIdFormat('USA');
-    expect(result).not.toBeNull();
-    expect(result!.format).toBeUndefined();
+  it('should have format strings for every registered country after format-info completion', () => {
+    for (const code of SUPPORTED_COUNTRIES.map(country => country.code)) {
+      const result = getCountryIdFormat(code);
+      expect(result).not.toBeNull();
+      expect(result!.format).toBeDefined();
+    }
   });
 });
 
@@ -159,6 +174,7 @@ describe('Alias resolution in getCountryIdFormat', () => {
     { alias: 'JP', expectedCode: 'JPN' },
     { alias: 'KZ', expectedCode: 'KAZ' },
     { alias: 'KW', expectedCode: 'KWT' },
+    { alias: 'EG', expectedCode: 'EGY' },
     { alias: 'ID', expectedCode: 'IDN' },
     { alias: 'KR', expectedCode: 'KOR' },
     { alias: 'MX', expectedCode: 'MEX' },
